@@ -1,41 +1,41 @@
 const orderModel = require('../models/orderModel');
 
 function mapRequestToOrder(body) {
-    const { numeroPedido, valorTotal, dataCriacao, items } = body;
+    const { orderNumber, totalValue, creationDate, items } = body;
 
-    const creationDate = new Date(dataCriacao).toISOString();
+    const formatDate = new Date(creationDate).toISOString();
 
     const mappedItems = (items || []).map((item) => ({
         productId: String(item.idItem),
-        quantity: Number(item.quantidadeItem),
-        price: Number(item.valorItem),
+        quantity: Number(item.quantityItem),
+        price: Number(item.valueItem),
     }));
 
     return {
-        orderId: numeroPedido,
-        value: Number(valorTotal),
-        creationDate,
+        orderId: orderNumber,
+        value: Number(totalValue),
+        creationDate: formatDate,
         items: mappedItems,
     };
 }
 
 function createOrder(req, res) {
     try {
-        const { numeroPedido, valorTotal, dataCriacao, items } = req.body;
+        const { orderNumber, totalValue, creationDate, items } = req.body;
 
-        if (!numeroPedido || valorTotal === undefined || !dataCriacao || !Array.isArray(items)) {
+        if (!orderNumber || totalValue === undefined || !creationDate || !Array.isArray(items)) {
             return res.status(400).json({
-                error: 'Campos obrigatórios ausentes: numeroPedido, valorTotal, dataCriacao, items',
+                error: 'Campos obrigatórios ausentes: orderNumber, totalValue, creationDate, items',
             });
         }
 
-        const existing = orderModel.getOrderById(numeroPedido);
+        const existing = orderModel.getOrderById(orderNumber);
         if (existing) {
-            return res.status(409).json({ error: `Pedido com numeroPedido "${numeroPedido}" já existe.` });
+            return res.status(409).json({ error: `Pedido com orderNumber "${orderNumber}" já existe.` });
         }
 
-        const { orderId, value, creationDate, items: mappedItems } = mapRequestToOrder(req.body);
-        const order = orderModel.createOrder(orderId, value, creationDate, mappedItems);
+        const { orderId, value, formatDate, items: mappedItems } = mapRequestToOrder(req.body);
+        const order = orderModel.createOrder(orderId, value, formatDate, mappedItems);
 
         return res.status(201).json(order);
     } catch (err) {
@@ -73,15 +73,15 @@ function listOrders(req, res) {
 function updateOrder(req, res) {
     try {
         const { orderId } = req.params;
-        const { valorTotal, dataCriacao, items } = req.body;
+        const { totalValue, creationDate, items } = req.body;
 
-        if (valorTotal === undefined || !dataCriacao || !Array.isArray(items)) {
+        if (totalValue === undefined || !creationDate || !Array.isArray(items)) {
             return res.status(400).json({
-                error: 'Campos obrigatórios ausentes para atualização: valorTotal, dataCriacao, items',
+                error: 'Campos obrigatórios ausentes para atualização: totalValue, creationDate, items',
             });
         }
 
-        const mapped = mapRequestToOrder({ numeroPedido: orderId, valorTotal, dataCriacao, items });
+        const mapped = mapRequestToOrder({ orderNumber: orderId, totalValue, creationDate, items });
         const updated = orderModel.updateOrder(orderId, mapped.value, mapped.creationDate, mapped.items);
 
         if (!updated) {
