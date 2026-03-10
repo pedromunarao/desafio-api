@@ -27,7 +27,7 @@ function initializeDatabase() {
     )
   `);
 
-  console.log('✅ Banco de dados inicializado com sucesso.');
+  console.log('Banco de dados inicializado com sucesso.');
 }
 
 initializeDatabase();
