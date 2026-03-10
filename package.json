@@ -4,15 +4,18 @@
   "description": "API REST para gerenciamento de pedidos usando Node.js e SQLite",
   "main": "src/server.js",
   "scripts": {
-    "start": "node src/server.js",
-    "dev": "nodemon src/server.js"
+    "start": "concurrently --names \"API,FRONT\" --prefix-colors \"cyan,magenta\" \"node src/server.js\" \"node frontend-server.js\"",
+    "dev": "concurrently --names \"API,FRONT\" --prefix-colors \"cyan,magenta\" \"nodemon src/server.js\" \"node frontend-server.js\"",
+    "api": "node src/server.js",
+    "frontend": "node frontend-server.js"
   },
   "dependencies": {
-    "express": "^4.18.2",
     "better-sqlite3": "^9.4.3",
+    "express": "^4.18.2",
     "uuid": "^9.0.0"
   },
   "devDependencies": {
+    "concurrently": "^9.2.1",
     "nodemon": "^3.0.2"
   }
 }

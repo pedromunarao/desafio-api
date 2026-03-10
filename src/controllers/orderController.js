@@ -34,8 +34,8 @@ function createOrder(req, res) {
             return res.status(409).json({ error: `Pedido com orderNumber "${orderNumber}" já existe.` });
         }
 
-        const { orderId, value, formatDate, items: mappedItems } = mapRequestToOrder(req.body);
-        const order = orderModel.createOrder(orderId, value, formatDate, mappedItems);
+        const { orderId, value, creationDate: formattedDate, items: mappedItems } = mapRequestToOrder(req.body);
+        const order = orderModel.createOrder(orderId, value, formattedDate, mappedItems);
 
         return res.status(201).json(order);
     } catch (err) {
