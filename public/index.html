@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="h-full">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gerenciador de Pedidos</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        bg: '#0f1117',
+                        surface: '#1a1d27',
+                        surf2: '#22263a',
+                        border: '#2e334d',
+                        accent: { DEFAULT: '#6c63ff', light: '#8b85ff' },
+                        danger: '#ff5c6a',
+                        ok: '#3ecf8e',
+                        warn: '#f59e0b',
+                    },
+                },
+            },
+        };
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet" />
+
+    <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body class="h-full flex flex-col">
+
+    <header
+        class="app-header sticky top-0 z-50 flex items-center gap-4 px-8 py-4 bg-surface border-b border-border backdrop-blur-md">
+        <div
+            class="w-10 h-10 rounded-xl bg-gradient-to-br from-accent to-purple-400 flex items-center justify-center text-xl shrink-0">
+            📦</div>
+        <div>
+            <h1 class="text-lg font-bold tracking-tight leading-none">Gerenciador de Pedidos</h1>
+            <span class="text-xs text-slate-500 font-normal">API REST · Node.js + SQLite</span>
+        </div>
+        <div id="status-pill"
+            class="status-pill offline ml-auto flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold transition-all">
+            <div class="w-1.5 h-1.5 rounded-full bg-current"></div>
+            <span id="status-text">Verificando...</span>
+        </div>
+    </header>
+
+    <div class="flex flex-1 min-h-0 overflow-hidden">
+
+        <aside class="w-64 shrink-0 bg-surface border-r border-border flex flex-col gap-1 p-4 overflow-y-auto">
+            <p class="sidebar-label">Pedidos</p>
+            <button class="nav-btn active" data-view="list">
+                <span
+                    class="nav-icon w-7 h-7 rounded-lg bg-surf2 flex items-center justify-center text-sm shrink-0">📋</span>
+                Todos os Pedidos
+                <span id="badge-count" class="badge ml-auto">0</span>
+            </button>
+            <button class="nav-btn" data-view="search">
+                <span
+                    class="nav-icon w-7 h-7 rounded-lg bg-surf2 flex items-center justify-center text-sm shrink-0">🔍</span>
+                Buscar Pedido
+            </button>
+
+            <p class="sidebar-label mt-4">Operações</p>
+            <button class="nav-btn" data-view="create">
+                <span
+                    class="nav-icon w-7 h-7 rounded-lg bg-surf2 flex items-center justify-center text-sm shrink-0">➕</span>
+                Criar Pedido
+            </button>
+            <button class="nav-btn" data-view="update">
+                <span
+                    class="nav-icon w-7 h-7 rounded-lg bg-surf2 flex items-center justify-center text-sm shrink-0">✏️</span>
+                Atualizar Pedido
+            </button>
+            <button class="nav-btn" data-view="delete">
+                <span
+                    class="nav-icon w-7 h-7 rounded-lg bg-surf2 flex items-center justify-center text-sm shrink-0">🗑️</span>
+                Deletar Pedido
+            </button>
+        </aside>
+
+        <main class="flex-1 overflow-y-auto p-8">
+
+            <section class="view active flex-col gap-6" id="view-list">
+                <div class="flex flex-wrap items-start justify-between gap-4">
+                    <div>
+                        <h2 class="text-2xl font-bold tracking-tight">Todos os Pedidos</h2>
+                        <p class="text-sm text-slate-500 mt-1">Listagem completa de pedidos cadastrados na API</p>
+                    </div>
+                    <button id="btn-refresh" class="btn-ghost text-sm px-4 py-2">🔄 Atualizar</button>
+                </div>
+                <div class="bg-surface border border-border rounded-xl overflow-hidden">
+                    <div id="list-loading" class="flex justify-center p-10">
+                        <div class="spinner"></div>
+                    </div>
+                    <div id="list-content" class="hidden">
+                        <div id="list-empty" class="hidden text-center py-14 text-slate-600">
+                            <div class="text-5xl mb-3 opacity-40">📭</div>
+                            <p class="text-sm">Nenhum pedido cadastrado ainda.</p>
+                        </div>
+                        <div id="list-table-wrap" class="hidden overflow-x-auto">
+                            <table class="w-full text-sm" id="order-table">
+                                <thead>
+                                    <tr class="border-b border-border">
+                                        <th class="table-th">Nº Pedido</th>
+                                        <th class="table-th">Valor Total</th>
+                                        <th class="table-th">Data de Criação</th>
+                                        <th class="table-th">Itens</th>
+                                        <th class="table-th">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="orders-tbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="view hidden flex-col gap-6" id="view-search">
+                <div>
+                    <h2 class="text-2xl font-bold tracking-tight">Buscar Pedido</h2>
+                    <p class="text-sm text-slate-500 mt-1">Consulte um pedido pelo seu número identificador</p>
+                </div>
+                <div class="bg-surface border border-border rounded-xl p-6">
+                    <div class="flex gap-3">
+                        <input id="search-id" type="text" placeholder="Número do pedido (ex: ORD-001)"
+                            class="field-input flex-1" />
+                        <button id="btn-search" class="btn-primary px-5 py-2.5 text-sm">🔍 Buscar</button>
+                    </div>
+                </div>
+                <div id="search-result" class="hidden"></div>
+            </section>
+
+            <section class="view hidden flex-col gap-6" id="view-create">
+                <div>
+                    <h2 class="text-2xl font-bold tracking-tight">Criar Pedido</h2>
+                    <p class="text-sm text-slate-500 mt-1">Preencha os campos abaixo para cadastrar um novo pedido</p>
+                </div>
+                <div class="bg-surface border border-border rounded-xl p-6">
+                    <p class="section-label mb-4">Dados do Pedido</p>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="flex flex-col gap-1.5">
+                            <label class="field-label" for="c-orderNumber">Número do Pedido</label>
+                            <input id="c-orderNumber" type="text" placeholder="ex: ORD-001" class="field-input" />
+                        </div>
+                        <div class="flex flex-col gap-1.5">
+                            <label class="field-label" for="c-totalValue">Valor Total (R$)</label>
+                            <input id="c-totalValue" type="number" placeholder="ex: 150.00" step="0.01" min="0"
+                                class="field-input" />
+                        </div>
+                        <div class="flex flex-col gap-1.5 col-span-2 md:col-span-1">
+                            <label class="field-label" for="c-creationDate">Data de Criação</label>
+                            <input id="c-creationDate" type="datetime-local" class="field-input" />
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-surface border border-border rounded-xl p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <p class="section-label">Itens do Pedido</p>
+                        <button id="btn-add-create-item" class="btn-ghost text-xs px-3 py-1.5">+ Adicionar Item</button>
+                    </div>
+                    <div id="create-items" class="flex flex-col gap-2.5"></div>
+                    <p id="create-items-empty" class="text-center text-slate-600 text-sm py-5">
+                        Nenhum item adicionado. Clique em "+ Adicionar Item".
+                    </p>
+                </div>
+                <div class="flex justify-end gap-3">
+                    <button id="btn-clear-create" class="btn-ghost px-5 py-2.5 text-sm">Limpar</button>
+                    <button id="btn-submit-create" class="btn-primary px-5 py-2.5 text-sm">📦 Criar Pedido</button>
+                </div>
+                <div id="create-response" class="hidden">
+                    <div class="bg-surface border border-border rounded-xl p-6">
+                        <p class="section-label mb-3"><span class="method-tag post">POST</span> Resposta da API</p>
+                        <pre id="create-response-box" class="response-box"></pre>
+                    </div>
+                </div>
+            </section>
+            <section class="view hidden flex-col gap-6" id="view-update">
+                <div>
+                    <h2 class="text-2xl font-bold tracking-tight">Atualizar Pedido</h2>
+                    <p class="text-sm text-slate-500 mt-1">Modifique os dados de um pedido existente</p>
+                </div>
+                <div class="bg-surface border border-border rounded-xl p-6">
+                    <p class="section-label mb-4">Identificar Pedido</p>
+                    <div class="flex gap-3">
+                        <input id="u-orderId" type="text" placeholder="Número do pedido a atualizar"
+                            class="field-input flex-1" />
+                        <button id="btn-load-update" class="btn-ghost px-5 py-2.5 text-sm">📥 Carregar</button>
+                    </div>
+                </div>
+                <div id="update-form" class="hidden flex-col gap-6">
+                    <div class="bg-surface border border-border rounded-xl p-6">
+                        <p class="section-label mb-4">Novos Dados</p>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="flex flex-col gap-1.5">
+                                <label class="field-label" for="u-totalValue">Valor Total (R$)</label>
+                                <input id="u-totalValue" type="number" placeholder="ex: 200.00" step="0.01" min="0"
+                                    class="field-input" />
+                            </div>
+                            <div class="flex flex-col gap-1.5">
+                                <label class="field-label" for="u-creationDate">Data de Criação</label>
+                                <input id="u-creationDate" type="datetime-local" class="field-input" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-surface border border-border rounded-xl p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <p class="section-label">Itens do Pedido</p>
+                            <button id="btn-add-update-item" class="btn-ghost text-xs px-3 py-1.5">+ Adicionar
+                                Item</button>
+                        </div>
+                        <div id="update-items" class="flex flex-col gap-2.5"></div>
+                        <p id="update-items-empty" class="hidden text-center text-slate-600 text-sm py-5">Nenhum item.
+                        </p>
+                    </div>
+                    <div class="flex justify-end gap-3">
+                        <button id="btn-cancel-update" class="btn-ghost px-5 py-2.5 text-sm">Cancelar</button>
+                        <button id="btn-submit-update" class="btn-primary px-5 py-2.5 text-sm">💾 Salvar
+                            Alterações</button>
+                    </div>
+                </div>
+                <div id="update-response" class="hidden">
+                    <div class="bg-surface border border-border rounded-xl p-6">
+                        <p class="section-label mb-3"><span class="method-tag put">PUT</span> Resposta da API</p>
+                        <pre id="update-response-box" class="response-box"></pre>
+                    </div>
+                </div>
+            </section>
+
+            <section class="view hidden flex-col gap-6" id="view-delete">
+                <div>
+                    <h2 class="text-2xl font-bold tracking-tight">Deletar Pedido</h2>
+                    <p class="text-sm text-slate-500 mt-1">Remove permanentemente um pedido e todos os seus itens</p>
+                </div>
+                <div class="bg-surface border border-border rounded-xl p-6">
+                    <p class="section-label mb-4">Identificar Pedido</p>
+                    <div class="flex gap-3">
+                        <input id="d-orderId" type="text" placeholder="Número do pedido a deletar"
+                            class="field-input flex-1" />
+                        <button id="btn-submit-delete" class="btn-danger px-5 py-2.5 text-sm">🗑️ Deletar</button>
+                    </div>
+                </div>
+                <div id="delete-response" class="hidden">
+                    <div class="bg-surface border border-border rounded-xl p-6">
+                        <p class="section-label mb-3"><span class="method-tag delete">DELETE</span> Resposta da API</p>
+                        <pre id="delete-response-box" class="response-box"></pre>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <div id="toast-container" class="fixed bottom-7 right-7 z-[9999] flex flex-col gap-2.5 pointer-events-none"></div>
+
+    <div id="modal-backdrop"
+        class="hidden fixed inset-0 bg-black/65 z-[200] flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-surface border border-border rounded-xl p-7 w-96 max-w-[90vw] shadow-2xl">
+            <h3 id="modal-title" class="text-lg font-semibold mb-2"></h3>
+            <p id="modal-body" class="text-sm text-slate-400 leading-relaxed"></p>
+            <div class="flex gap-3 justify-end mt-6">
+                <button id="modal-cancel" class="btn-ghost px-4 py-2 text-sm">Cancelar</button>
+                <button id="modal-confirm" class="btn-danger px-4 py-2 text-sm">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>

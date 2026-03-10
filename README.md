@@ -4,83 +4,137 @@
 ![Express.js](https://img.shields.io/badge/Express.js-000000?style=for-the-badge&logo=express&logoColor=white)
 ![SQLite](https://img.shields.io/badge/SQLite-07405E?style=for-the-badge&logo=sqlite&logoColor=white)
 
-Uma API REST desenvolvida em Node.js com Express e SQLite para o gerenciamento de pedidos e seus respectivos itens. 
+Uma API REST desenvolvida em Node.js com Express e SQLite para o gerenciamento de pedidos e seus respectivos itens, com frontend web integrado com IA.
 
 ## 🎯 Objetivo do Projeto
 
-O objetivo deste projeto é fornecer uma interface robusta para operações CRUD (Criar, Ler, Atualizar, Deletar) de pedidos. Cada pedido contém informações como `numeroPedido`, `valorTotal` e `dataCriacao`, além de uma lista de itens associados (com `idItem`, `quantidadeItem` e `valorItem`). O sistema foi desenhado para ser simples de configurar, rápido e sem dependências de bancos de dados externos complexos, utilizando o SQLite embutido.
+Fornecer uma interface robusta para operações CRUD (Criar, Ler, Atualizar, Deletar) de pedidos. Cada pedido contém `orderNumber`, `totalValue` e `creationDate`, além de uma lista de itens com `idItem`, `quantityItem` e `valueItem`. O sistema inclui um frontend web que consome a API diretamente pelo navegador.
 
 ## 🏗️ Arquitetura
 
-O projeto segue uma arquitetura em camadas baseada no padrão **MVC (Model-View-Controller) simplificado** (sem a camada View, por ser uma API REST), o que garante boa separação de responsabilidades (Separation of Concerns).
-
-A estrutura de diretórios é organizada da seguinte forma:
+O projeto segue uma arquitetura em camadas baseada no padrão **MVC simplificado** (sem a camada View na API), com um frontend estático servido por um servidor separado.
 
 ```text
-/src
-├── /controllers   # Lógica de controle e tratamento de requisições HTTP (Validações, mapping e respostas)
-├── /database      # Configuração e inicialização do banco de dados SQLite (Criação de tabelas)
-├── /models        # Lógica de persistência de dados (Queries SQL, transações e acesso ao BD)
-├── /routes        # Definição e roteamento dos endpoints da API
-└── server.js      # Ponto de entrada da aplicação, configuração do Express e middlewares
+/
+├── /src
+│   ├── /controllers   # Lógica de controle e tratamento de requisições HTTP
+│   ├── /database      # Configuração e inicialização do banco de dados SQLite
+│   ├── /models        # Lógica de persistência de dados (queries SQL)
+│   ├── /routes        # Definição dos endpoints da API
+│   └── server.js      # Ponto de entrada da API (porta 3000)
+├── /public
+│   ├── index.html     # Interface web
+│   ├── app.js         # Lógica do frontend
+│   └── styles.css     # Estilos
+├── frontend-server.js # Servidor do frontend + proxy para a API (porta 8080)
+└── database.sqlite    # Banco de dados gerado automaticamente
 ```
-
-### Componentes Principais:
-1. **Server (`server.js`)**: Configura o servidor Express, define os middlewares (como o parser JSON) e registra as rotas globais. Também possui tratamento básico de erros (erro 404 e 500 globais).
-2. **Routes (`orderRoutes.js`)**: Mapeia as URLs base (`/order`) com seus respectivos verbos HTTP (GET, POST, PUT, DELETE) para os métodos do Controller correspondente.
-3. **Controllers (`orderController.js`)**: Responsável por receber o `request` e `response`. Ele valida os dados de entrada, mapeia o corpo da requisição para o formato do banco de dados e chama os métodos do Model. Por fim, retorna a resposta serializada em JSON para o cliente.
-4. **Models (`orderModel.js`)**: Encapsula as interações com o banco de dados. Utiliza o `better-sqlite3` para executar as operações de inserção, seleção, atualização e exclusão sincronamente. Utiliza *transactions* para garantir a consistência quando alteramos tabelas relacionadas simultaneamente (exemplo: ao inserir um pedido, insere os itens atrelados a ele).
-5. **Database (`db.js`)**: Responsável por configurar a conexão com o arquivo do banco de dados `database.sqlite` (que é criado na raiz do projeto) e inicializar as tabelas `Order` e `Items` com suas `Foreign Keys` (e o mecanismo `ON DELETE CASCADE`).
 
 ---
 
 ## 🚀 Como Rodar Localmente
 
 ### Pré-requisitos
-- Ter o [Node.js](https://nodejs.org/) instalado em sua máquina (v16 ou superior recomendado).
+- [Node.js](https://nodejs.org/) v16 ou superior
 
-### Passos para Execução
+### Passos
 
-1. **Clone ou acesse o diretório do projeto**:
-   Navegue até a pasta do projeto no seu terminal.
+1. **Acesse o diretório do projeto**:
    ```bash
    cd caminho/para/o/projeto/Jitterbit
    ```
 
 2. **Instale as dependências**:
-   Execute o comando abaixo para instalar as bibliotecas necessárias listadas no `package.json` (como `express`, `better-sqlite3`, etc).
    ```bash
    npm install
    ```
 
 3. **Inicie a aplicação**:
-   Você tem duas opções para iniciar o servidor localmente:
 
-   - **Modo Desenvolvimento (com auto-reload usando nodemon)**:
-     ```bash
-     npm run dev
-     ```
-   
-   - **Modo Produção/Padrão**:
-     ```bash
-     npm start
-     ```
+   | Comando | Descrição |
+   |---|---|
+   | `npm start` | Inicia a **API** (porta 3000) + **Frontend** (porta 8080) |
+   | `npm run dev` | Igual ao `start`, mas com auto-reload via `nodemon` |
+   | `npm run api` | Inicia somente a API |
+   | `npm run frontend` | Inicia somente o frontend |
 
-4. **Acesse a API**:
-   O servidor será iniciado por padrão na porta **3000** (ou na variável de ambiente `PORT`). 
-   Você verá a mensagem: `🚀 Servidor rodando em http://localhost:3000`
+4. **Acesse**:
+   - **Frontend:** [http://localhost:8080](http://localhost:8080)
+   - **API direta:** [http://localhost:3000](http://localhost:3000)
 
-   A API já estará pronta para receber requisições. O banco de dados SQLite (`database.sqlite`) será gerado magicamente na raiz do projeto logo na inicialização, sem a necessidade de intervenções manuais.
+   O banco de dados `database.sqlite` é criado automaticamente na raiz do projeto na primeira inicialização.
 
 ---
 
 ## 🔗 Endpoints da API
 
-Abaixo estão as rotas disponíveis na aplicação:
+Base URL: `http://localhost:3000`
 
-- `GET /` - Retorna as informações básicas da API e os endpoints.
-- `POST /order` - Cria um novo pedido junto de seus itens.
-- `GET /order/list` - Lista todos os pedidos cadastrados e seus respectivos itens.
-- `GET /order/:orderId` - Retorna um pedido específico e seus itens pelo `numeroPedido`.
-- `PUT /order/:orderId` - Atualiza as informações (e limpa/recria os itens) de um pedido existente.
-- `DELETE /order/:orderId` - Deleta um pedido específico (e automaticamente todos os seus itens associados devido ao cascade do banco).
+### `GET /`
+Retorna informações básicas da API e lista de endpoints.
+
+---
+
+### `POST /order`
+Cria um novo pedido com seus itens.
+
+**Body:**
+```json
+{
+  "orderNumber": "001",
+  "totalValue": 150.00,
+  "creationDate": "2024-03-09",
+  "items": [
+    {
+      "idItem": "prod-1",
+      "quantityItem": 2,
+      "valueItem": 75.00
+    }
+  ]
+}
+```
+
+**Resposta:** `201 Created` com o pedido criado.
+
+---
+
+### `GET /order/list`
+Lista todos os pedidos cadastrados com seus respectivos itens.
+
+**Resposta:** `200 OK` com array de pedidos.
+
+---
+
+### `GET /order/:orderId`
+Retorna um pedido específico pelo `orderNumber`.
+
+**Resposta:** `200 OK` com o pedido | `404 Not Found`
+
+---
+
+### `PUT /order/:orderId`
+Atualiza as informações de um pedido existente (recria os itens).
+
+**Body:**
+```json
+{
+  "totalValue": 200.00,
+  "creationDate": "2024-03-10",
+  "items": [
+    {
+      "idItem": "prod-2",
+      "quantityItem": 1,
+      "valueItem": 200.00
+    }
+  ]
+}
+```
+
+**Resposta:** `200 OK` com o pedido atualizado | `404 Not Found`
+
+---
+
+### `DELETE /order/:orderId`
+Remove um pedido e todos os seus itens (cascade).
+
+**Resposta:** `200 OK` com mensagem de confirmação | `404 Not Found`
