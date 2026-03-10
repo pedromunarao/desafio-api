@@ -4,7 +4,9 @@
 ![Express.js](https://img.shields.io/badge/Express.js-000000?style=for-the-badge&logo=express&logoColor=white)
 ![SQLite](https://img.shields.io/badge/SQLite-07405E?style=for-the-badge&logo=sqlite&logoColor=white)
 
-Uma API REST desenvolvida em Node.js com Express e SQLite para o gerenciamento de pedidos e seus respectivos itens, com frontend web integrado com IA.
+Uma API REST desenvolvida em Node.js com Express e SQLite para o gerenciamento de pedidos e seus respectivos itens, com frontend web. 
+
+| O frontend foi desenvolvido a parte com ferramentas de Inteligência Artificial já que para o desafio não era obrigatório.
 
 ## 🎯 Objetivo do Projeto
 
@@ -138,3 +140,4 @@ Atualiza as informações de um pedido existente (recria os itens).
 Remove um pedido e todos os seus itens (cascade).
 
 **Resposta:** `200 OK` com mensagem de confirmação | `404 Not Found`
+
